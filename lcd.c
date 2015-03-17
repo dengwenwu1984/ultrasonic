@@ -1,11 +1,6 @@
-#include <msp430g2211.h>
-#define LED BIT0
+#include <msp430g2231.h>
 #define RS 0x20
 #define E 0x80 
-#define DB4 BIT4
-#define DB5 BIT5
-#define DB6 BIT6
-#define DB7 BIT7
 
 /* LCD connections
  * RS - P1.5
@@ -17,27 +12,36 @@
  */
 
 void lcd_reset(void);
+void lcd_reset_inv(void);
 void lcd_init(void);
 void lcd_data (unsigned char dat);
 void lcd_cmd (char cmd);
 
 
-void delayMS(unsigned int ms )
+void delay_ms(unsigned int ms)
 {
-    unsigned int i;
-    for (i = 0; i<= ms; i++)
-        __delay_cycles(2000);
+    while (ms) {
+        __delay_cycles(8130);
+        ms--;
+    }
 }
 
 int main(void) {
 
     WDTCTL = WDTPW + WDTHOLD;
-    P1DIR |= 0xFF; 
+    /* the following two lines will set clock rate to approximately 7~8MHz */
+    BCSCTL1 = 0xCC;
+    DCOCTL = 0xFF;
+
+    P1DIR = 0xFF; 
+    /* inverted logic */
+    P1OUT = 0xFF; 
     
     lcd_init();
 
     while (1) {
-        
+        lcd_data('A');
+        delay_ms(1000);
     }
 
 
@@ -45,36 +49,53 @@ int main(void) {
 }
 
 void lcd_reset() {
-    P1OUT = 0xFF;
-    delayMS(50);
-    P1OUT = 0x03|E;
-    P1OUT = 0x03;
-    delayMS(2);
-    P1OUT = 0x03|E;
-    P1OUT = 0x03;
-    delayMS(2);
-    P1OUT = 0x03|E;
-    P1OUT = 0x03;
-    delayMS(2);
-    P1OUT = 0x02|E;
-    P1OUT = 0x02;
-    delayMS(2);
+    P1OUT = ~0xFF;
+    delay_ms(50);
+    P1OUT = ~(0x03+E);
+    P1OUT = ~(0x03);
+    delay_ms(10);
+    P1OUT = ~(0x03+E);
+    P1OUT = ~(0x03);
+    delay_ms(2);
+    P1OUT = ~(0x03+E);
+    P1OUT = ~(0x03);
+    delay_ms(2);
+    P1OUT = ~(0x02+E);
+    P1OUT = ~(0x02);
+    delay_ms(2);
+}
+
+void lcd_reset_inv() {
+    P1OUT = 0x00;
+    delay_ms(50);
+    P1OUT = 0x7C;
+    P1OUT = 0xFC;
+    delay_ms(10);
+    P1OUT = 0x7C;
+    P1OUT = 0xFC;
+    delay_ms(2);
+    P1OUT = 0x7C;
+    P1OUT = 0xFC;
+    delay_ms(2);
+    P1OUT = 0x7D;
+    P1OUT = 0xFD;
+    delay_ms(2);
 }
 
 void lcd_cmd (char cmd) { 
-	P1OUT = ((cmd >> 4) & 0x0F) | E;
-	P1OUT = ((cmd >> 4) & 0x0F);
+	P1OUT = ~(((cmd >> 4) & 0x0F) | E);
+	P1OUT = ~(((cmd >> 4) & 0x0F));
 
-	delayMS(2);
+        delay_ms(2);
 
-	P1OUT = (cmd & 0x0F) | E;
-	P1OUT = (cmd & 0x0F);
+	P1OUT = ~((cmd & 0x0F) | E);
+	P1OUT = ~((cmd & 0x0F));
 
-	delayMS(2);
+	delay_ms(2);
 }
 
 void lcd_init () {
-	lcd_reset();         // Call LCD reset
+	lcd_reset_inv();         // Call LCD reset
 	lcd_cmd(0x28);       // 4-bit mode - 2 line - 5x7 font. 
 	lcd_cmd(0x0E);       // Display no cursor - no blink.
 	lcd_cmd(0x06);       // Automatic Increment - No Display shift.
@@ -82,13 +103,13 @@ void lcd_init () {
  }
 
 void lcd_data (unsigned char dat) { 
-	P1OUT = (((dat >> 4) & 0x0F)|E|RS);
-	P1OUT = (((dat >> 4) & 0x0F)|RS);
+	P1OUT = ~(((dat >> 4) & 0x0F)|E|RS);
+	P1OUT = ~(((dat >> 4) & 0x0F)|RS);
 
-	delayMS(2);
+	delay_ms(2);
 	
-	P1OUT = ((dat & 0x0F)|E|RS);
-	P1OUT = ((dat & 0x0F)|RS);
+	P1OUT = ~((dat & 0x0F)|E|RS);
+	P1OUT = ~((dat & 0x0F)|RS);
 
-	delayMS(2);
+	delay_ms(2);
 }

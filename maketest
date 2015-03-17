@@ -3,11 +3,11 @@
 # user configuration:
 #######################################
 # TARGET: name of the output file
-TARGET = main.elf
+TARGET = test.elf
 # MCU: part number to build for
-MCU = msp430g2231
+MCU = msp430g2452
 # SOURCES: list of input source sources
-SOURCES = main.c timer.c pulse.c
+SOURCES = test.c
 # OBJECTS
 OBJECTS = $(SOURCES:.c=.o)
 # define flags
