@@ -3,17 +3,24 @@
 #include "fsm.h"
 
 #define NULL 0
-#define FACTOR 1838UL
+#define FACTOR 18
 
 /* default number of measurements (NORMAL mode) */
 volatile int measurements = 5;
 
 transition transition_table[EVENTS][STATES] = {
-/*              NORMAL                          ACCURACY                        EXTRA                   MEASURE*/
-/* SELECT */    {{ACCURACY, set_accuracy},      {EXTRA, set_extra},             {NORMAL, set_normal},   {MEASURE, NULL}},
-/* MEASURE */   {{NORMAL, measure_dist},        {ACCURACY, measure_dist},       {EXTRA, measure_dist},  {MEASURE, NULL}}
+/*                      NORMAL                          ACCURACY     */
+/* SELECT_BTN */    {{ACCURACY, set_accuracy},      {NORMAL, set_normal}},
+/* MEASURE_BTN */   {{NORMAL, measure_dist},        {ACCURACY, measure_dist}}
 };
 
+void delay_ms(unsigned int ms)
+{
+    while (ms) {
+        __delay_cycles(8130);
+        ms--;
+    }
+}
 
 void handle_event(event ev) {
     if (ev <= EVENTS && curr_state <= STATES) {
@@ -31,53 +38,71 @@ void handle_event(event ev) {
 
 
 void set_normal(void) {
+    P1OUT &= ~(1<<3);
     measurements = 5;
 }
 
 void set_accuracy(void) {
+    P1OUT |= (1<<3);
     measurements = 10;
 }
 
-void set_extra(void) {
-}
 
 void measure_dist(void) {
     /* variables */
-    unsigned long measurements_um[10];
-    unsigned long distance_um = 0;
-    unsigned long avg_distance_um = 0;
+    unsigned int measurements_100um[10];
+    unsigned int distance_100um = 0;
+    unsigned int avg_distance_100um = 0;
+    unsigned int avg_distance_cm = 0;
     int valid_measurements = 0;
     int i;
 
-    /* take measurements */
     for (i = 0; i < measurements; i++) {
-        timer_start();
-        timer_wdt_start();
+        wdt_counter = 0;
+        distance_100um = 0;
         pulse_send();
-        /* while no echo and no timeout */
-        while (!(P1IN & (1<<4)) && wdt_counter < 16) {
+
+        /* listen for echo within 5m */
+        while (!(P1IN & (1<<4)) && wdt_counter < 8) {
 
         }
         timer_stop();
-        timer_wdt_stop();
-        if (wdt_counter < 16) {
-            distance_um = (unsigned long)timer_counter*FACTOR;
+
+        /* check validity */
+        if (wdt_counter < 8) {
+            distance_100um = timer_counter*FACTOR;
+            /* add to table */
+            measurements_100um[valid_measurements] = distance_100um;
+            valid_measurements++;
         }
-        measurements_um[i] = distance_um;
-        
+        delay_ms(2);
     }
 
-    /* calculate mean */
-    for (i = 0; i < measurements; i++) {
-       avg_distance_um += measurements_um[i];
-       if (measurements_um[i]) {
-           valid_measurements++;
-       }
+    if (valid_measurements > 0) {
+        /* calculate mean */
+        for (i = 0; i < valid_measurements; i++) {
+            avg_distance_100um += measurements_100um[i];
+        }
+        avg_distance_100um = avg_distance_100um/valid_measurements;
+        avg_distance_cm = avg_distance_100um/100;
     }
-    avg_distance_um = avg_distance_um / valid_measurements; 
-
+    else {
+        avg_distance_cm = 0;
+    }
+    
     /* display distance */
+    reset_7seg();
+    for (i = 0; i < avg_distance_cm; i++) {
+        P1OUT |= (1<<6);
+        delay_ms(1);
+        P1OUT &= ~(1<<6);
+    }
+}
 
+void reset_7seg(void) {
+    P1OUT |= (1<<7);
+    delay_ms(1);
+    P1OUT &= ~(1<<7);
 }
 
 void display_dist(void) {

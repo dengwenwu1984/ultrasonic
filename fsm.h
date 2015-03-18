@@ -1,18 +1,10 @@
 
-#define EVENTS 3
-#define STATES 4
-
-void set_normal(void);
-void set_accuracy(void);
-void set_extra(void);
-void measure_dist(void);
-void display_dist(void);
+#define EVENTS 2
+#define STATES 2
 
 typedef enum {
     NORMAL,
     ACCURACY,
-    EXTRA,
-    MEASURE
 } state;
 
 state curr_state;
@@ -26,3 +18,12 @@ typedef struct {
     int next_state;
     int (*action)(void);
 } transition;
+
+void delay_ms(unsigned int ms);
+void handle_event(event ev);
+void set_normal(void);
+void set_accuracy(void);
+void measure_dist(void);
+void reset_7seg(void);
+void display_dist(void);
+

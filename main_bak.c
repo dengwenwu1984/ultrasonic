@@ -6,13 +6,7 @@
 unsigned int distance_100um;
 unsigned int distance_cm;
 
-typedef enum {
-    NONE,
-    SELECT,
-    MEASURE
-} button;
 
-volatile button btn = NONE;
 
 int main(void)
 {
@@ -24,13 +18,13 @@ int main(void)
     /* outputs */
     P1DIR |= (1<<0);
     P1DIR |= (1<<3);
+    P1DIR |= (1<<5);
     P1DIR |= (1<<6);
-    P1DIR |= (1<<7);
 
     P1OUT &= ~(1<<0);
     P1OUT &= ~(1<<3);
+    P1OUT &= ~(1<<5);
     P1OUT &= ~(1<<6);
-    P1OUT &= ~(1<<7);
 
     
     /* inputs */
@@ -49,16 +43,6 @@ int main(void)
     while (1) {
         //measure_dist();
         //delay_ms(2000);
-        switch (btn) {
-            case SELECT:
-                handle_event(SELECT_BTN);
-                btn = NONE;
-                break;
-            case MEASURE:
-                handle_event(MEASURE_BTN);
-                btn = NONE;
-                break;
-        }
         
     }
     
@@ -77,18 +61,13 @@ __interrupt void Port_1 (void) {
     //check which button
     if (P1IFG & (1<<1)) {
         P1IFG &= ~(1<<1);
-        btn = MEASURE;
-
+        handle_event(MEASURE_BTN);
     }
-    else if (P1IFG & (1<<2)) {
+    if (P1IFG & (1<<2)) {
         P1IFG &= ~(1<<2);
-        btn = SELECT;
+        handle_event(SELECT_BTN);
         
     }
-    else {
-        btn = NONE;
-    }
-
 }
 
 #pragma vector=WDT_VECTOR

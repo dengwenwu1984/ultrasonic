@@ -7,7 +7,7 @@ TARGET = main.elf
 # MCU: part number to build for
 MCU = msp430g2231
 # SOURCES: list of input source sources
-SOURCES = main.c timer.c pulse.c
+SOURCES = main.c timer.c pulse.c fsm.c
 # OBJECTS
 OBJECTS = $(SOURCES:.c=.o)
 # define flags
