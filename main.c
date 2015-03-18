@@ -24,11 +24,13 @@ int main(void)
     /* outputs */
     P1DIR |= (1<<0);
     P1DIR |= (1<<3);
+    P1DIR |= (1<<5);
     P1DIR |= (1<<6);
     P1DIR |= (1<<7);
 
     P1OUT &= ~(1<<0);
     P1OUT &= ~(1<<3);
+    P1OUT &= ~(1<<5);
     P1OUT &= ~(1<<6);
     P1OUT &= ~(1<<7);
 
@@ -46,9 +48,9 @@ int main(void)
 
     timer_wdt_start();
 
+    reset_display();
+
     while (1) {
-        //measure_dist();
-        //delay_ms(2000);
         switch (btn) {
             case SELECT:
                 handle_event(SELECT_BTN);

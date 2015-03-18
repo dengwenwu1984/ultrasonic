@@ -1,10 +1,11 @@
 
 #define EVENTS 2
-#define STATES 2
+#define STATES 3
 
 typedef enum {
     NORMAL,
     ACCURACY,
+    LONG_RANGE,
 } state;
 
 state curr_state;
@@ -23,7 +24,8 @@ void delay_ms(unsigned int ms);
 void handle_event(event ev);
 void set_normal(void);
 void set_accuracy(void);
+void set_long_range(void);
 void measure_dist(void);
-void reset_7seg(void);
-void display_dist(void);
+void reset_display(void);
+void display_dist(int value);
 
